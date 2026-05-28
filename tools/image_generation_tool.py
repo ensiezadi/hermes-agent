@@ -995,15 +995,25 @@ def _dispatch_to_plugin_provider(prompt: str, aspect_ratio: str):
 
     Returns a JSON string on dispatch, or ``None`` to fall through to the
     built-in FAL path.
-
-    Dispatch only fires when ``image_gen.provider`` is explicitly set AND
-    it does not point to ``fal`` (FAL still lives in-tree in this PR;
-    a later PR ports it into ``plugins/image_gen/fal/``). Any other value
-    that matches a registered plugin provider wins.
     """
     configured = _read_configured_image_provider()
+    
     if not configured or configured == "fal":
-        return None
+        # Auto-detect an available plugin provider if not explicitly configured to fal
+        if not configured:
+            try:
+                from agent.image_gen_registry import list_providers
+                from hermes_cli.plugins import _ensure_plugins_discovered
+                _ensure_plugins_discovered()
+                for provider in list_providers():
+                    if provider.is_available():
+                        configured = provider.name
+                        break
+            except Exception:
+                pass
+                
+        if not configured or configured == "fal":
+            return None
 
     # Also read configured model so we can pass it to the plugin
     configured_model = _read_configured_image_model()

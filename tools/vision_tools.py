@@ -1047,15 +1047,15 @@ def _handle_vision_analyze(args: Dict[str, Any], **kw: Any) -> Awaitable[str]:
     return vision_analyze_tool(image_url, full_prompt, model)
 
 
-registry.register(
-    name="vision_analyze",
-    toolset="vision",
-    schema=VISION_ANALYZE_SCHEMA,
-    handler=_handle_vision_analyze,
-    check_fn=check_vision_requirements,
-    is_async=True,
-    emoji="👁️",
-)
+# registry.register(
+#     name="vision_analyze",
+#     toolset="vision",
+#     schema=VISION_ANALYZE_SCHEMA,
+#     handler=_handle_vision_analyze,
+#     check_fn=check_vision_requirements,
+#     is_async=True,
+#     emoji="👁️",
+# )
 
 
 # ---------------------------------------------------------------------------

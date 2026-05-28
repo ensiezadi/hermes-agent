@@ -42,11 +42,11 @@ hermes-agent/
 ├── plugins/              # Plugin system (see "Plugins" section below)
 │   ├── memory/           # Memory-provider plugins (honcho, mem0, supermemory, ...)
 │   ├── context_engine/   # Context-engine plugins
-│   ├── model-providers/  # Inference backend plugins (openrouter, anthropic, gmi, ...)
+│   ├── model-providers/  # Inference backend plugins (openrouter, anthropic, gmi, minimax, ...)
 │   ├── kanban/           # Multi-agent board dispatcher + worker plugin
 │   ├── hermes-achievements/  # Gamified achievement tracking
 │   ├── observability/    # Metrics / traces / logs plugin
-│   ├── image_gen/        # Image-generation providers
+│   ├── image_gen/        # Image-generation providers (minimax, fal, openai, ...)
 │   └── <others>/         # disk-cleanup, example-dashboard, google_meet, platforms,
 │                         #   spotify, strike-freedom-cockpit, ...
 ├── optional-skills/      # Heavier/niche skills shipped but NOT active by default
@@ -58,6 +58,8 @@ hermes-agent/
 ├── cron/                 # Scheduler — jobs.py, scheduler.py
 ├── scripts/              # run_tests.sh, release.py, auxiliary scripts
 ├── website/              # Docusaurus docs site
+├── README.md             # Primary English documentation
+├── README.zh-CN.md       # Chinese documentation
 └── tests/                # Pytest suite (~17k tests across ~900 files as of May 2026)
 ```
 
@@ -996,6 +998,50 @@ The `_isolate_hermes_home` autouse fixture in `tests/conftest.py` redirects `HER
 
 **Profile tests**: When testing profile features, also mock `Path.home()` so that
 `_get_profiles_root()` and `_get_default_hermes_home()` resolve within the temp dir.
+
+### 存在两个 config.yaml —— 确保改的是正确的那个
+
+当你从 `hermes-agent/` 仓库目录直接启动 Hermes 时，Hermes home 可能是
+`hermes-agent/.hermes/`（仓库内），而非 `~/.hermes/`（全局）。
+
+判断方法：看图片保存路径。若截图存在 `hermes-agent/.hermes/images/`，
+则 Hermes 用的 config 是 `hermes-agent/.hermes/config.yaml`。
+
+改错文件是调试 MCP 配置时最常见的陷阱 — 两个文件改了一个，
+Hermes 重启后依然表现异常，却找不到原因。
+
+```bash
+# 快速确认 Hermes 实际在用哪个 config
+hermes config --show-path   # 若不支持，用：
+find ~/hermes-agent ~/.hermes -name config.yaml -newer ~/.zshrc 2>/dev/null
+```
+
+### MCP Server 走 socks5 代理时需要 PySocks 依赖
+
+系统代理为 `socks5://...` 时，`uvx` 创建的 MCP 隔离环境里默认没有
+`PySocks`，导致 `requests` 崩溃，错误被上层包装成 `invalid api key (2049)`，
+误导调试方向。
+
+**修复**：在 MCP 的 `args` 里注入 `--with requests[socks]`：
+
+```yaml
+mcp_servers:
+  minimax_mcp:
+    command: /opt/homebrew/bin/uvx
+    args:
+    - --with
+    - requests[socks]      # 注入 PySocks，解决 socks5 代理依赖
+    - minimax-coding-plan-mcp
+    env:
+      MINIMAX_API_HOST: https://api.minimaxi.com   # 国内；国际版为 api.minimax.io
+      MINIMAX_API_KEY: ${MINIMAX_CODING_PLAN_API_KEY}
+    timeout: 180
+    connect_timeout: 60
+    enabled: true
+```
+
+注意 `api.minimaxi.com`（国内）和 `api.minimax.io`（国际）是两个不同平台，
+API Key 不通用，配错域名同样会导致 `2049` 错误。
 Use the pattern from `tests/hermes_cli/test_profiles.py`:
 ```python
 @pytest.fixture
@@ -1023,6 +1069,8 @@ scripts/run_tests.sh tests/gateway/                   # one directory
 scripts/run_tests.sh tests/agent/test_foo.py::test_x  # one test
 scripts/run_tests.sh -v --tb=long                     # pass-through pytest flags
 ```
+
+**Bash Array Unbound Variables Note**: `scripts/run_tests.sh` runs with `set -u` (which is standard via `set -euo pipefail`). Always use `"${ARGS[@]:-}"` instead of `"${ARGS[@]}"` when passing arrays to commands, otherwise bash will throw an "unbound variable" error when the script is run with no arguments.
 
 ### Why the wrapper (and why the old "just call pytest" doesn't work)
 
