@@ -24,6 +24,8 @@ venv/
 node_modules/
 hermes_agent.egg-info/
 models-dev-upstream/
+.hermes/
+.vscode/
 
 # ==============================================================================
 # Environment Secrets & Configurations
