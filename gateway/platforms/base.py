@@ -354,7 +354,7 @@ def resolve_proxy_url(
             if should_bypass_proxy(target_hosts):
                 return None
             return normalize_proxy_url(value)
-    detected = normalize_proxy_url(_detect_macos_system_proxy())
+    detected = None  # patched: skip macOS system proxy
     if detected and should_bypass_proxy(target_hosts):
         return None
     return detected
