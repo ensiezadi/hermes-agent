@@ -979,14 +979,14 @@ def _generate_minimax_tts(text: str, output_path: str, tts_config: Dict[str, Any
     """
     import requests
 
-    api_key = (get_env_value("MINIMAX_API_KEY") or "")
+    api_key = (get_env_value("MINIMAX_API_KEY") or get_env_value("MINIMAX_CN_API_KEY") or "")
     if not api_key:
-        raise ValueError("MINIMAX_API_KEY not set. Get one at https://platform.minimax.io/")
+        raise ValueError("MINIMAX_API_KEY or MINIMAX_CN_API_KEY not set. Get one at https://platform.minimax.io/ or https://www.minimaxi.com/")
 
     mm_config = tts_config.get("minimax", {})
     model = mm_config.get("model", DEFAULT_MINIMAX_MODEL)
     voice_id = mm_config.get("voice_id", DEFAULT_MINIMAX_VOICE_ID)
-    base_url = mm_config.get("base_url", DEFAULT_MINIMAX_BASE_URL)
+    base_url = mm_config.get("base_url", get_env_value("MINIMAX_CN_BASE_URL") or DEFAULT_MINIMAX_BASE_URL)
     speed = mm_config.get("speed", 1.0)
     vol = mm_config.get("vol", 1.0)
     pitch = mm_config.get("pitch", 0)
@@ -1924,7 +1924,7 @@ def check_tts_requirements() -> bool:
             return True
     except ImportError:
         pass
-    if get_env_value("MINIMAX_API_KEY"):
+    if get_env_value("MINIMAX_API_KEY") or get_env_value("MINIMAX_CN_API_KEY"):
         return True
     try:
         from tools.xai_http import resolve_xai_http_credentials
