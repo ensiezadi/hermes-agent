@@ -1,0 +1,32 @@
+project_name: "MAR Research"
+current_stage: "intake"
+
+research_question:
+  main: "How can MAR preserve anatomy, lesions, and HU fidelity while reducing metal artifacts?"
+  sub_questions:
+    - "Which evidence from papers and codebases is reusable?"
+    - "Which candidate idea is novel enough to justify implementation?"
+    - "Which dataset and metrics best expose safety failures?"
+    - "How do we detect hallucination, HU drift, and lesion suppression?"
+
+datasets:
+  active: []
+  candidate: []
+
+core_metrics:
+  artifact_reduction: []
+  preservation: []
+  safety: []
+
+baselines:
+  implemented: []
+  planned: []
+
+open_questions:
+  - "What is the minimal protocol that can validate the idea safely?"
+  - "Which safety metric should gate Judge approval?"
+
+next_action:
+  - "Read the current task"
+  - "Classify the request into one stage"
+  - "Write the first decision log entry"

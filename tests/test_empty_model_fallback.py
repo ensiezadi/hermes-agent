@@ -1,7 +1,6 @@
 """Tests for empty model fallback — when provider is configured but model is missing."""
 
-from unittest.mock import MagicMock, patch
-import pytest
+from unittest.mock import patch
 
 
 class TestGetDefaultModelForProvider:
@@ -14,12 +13,17 @@ class TestGetDefaultModelForProvider:
         assert result
         assert isinstance(result, str)
 
-    def test_openrouter_returns_empty(self):
-        """OpenRouter uses dynamic model fetch, no static catalog entry."""
-        from hermes_cli.models import get_default_model_for_provider
-        # OpenRouter is not in _PROVIDER_MODELS — it uses live fetching
-        result = get_default_model_for_provider("openrouter")
-        assert result == ""
+    def test_openrouter_returns_curated_default(self):
+        """OpenRouter should resolve to a concrete curated default model."""
+        with patch(
+            "hermes_cli.model_catalog.get_curated_openrouter_models",
+            return_value=[("anthropic/claude-opus-4.7", "recommended")],
+        ):
+            from hermes_cli.models import get_default_model_for_provider
+
+            result = get_default_model_for_provider("openrouter")
+
+        assert result == "anthropic/claude-opus-4.7"
 
     def test_unknown_provider_returns_empty(self):
         from hermes_cli.models import get_default_model_for_provider

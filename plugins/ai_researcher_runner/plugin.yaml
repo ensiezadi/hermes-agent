@@ -1,0 +1,11 @@
+name: ai_researcher_runner
+version: 0.1.0
+description: "Structured Hermes tools for running the local AI-Researcher workflows."
+author: Chris Ezadiensi and Hermes Agent
+kind: standalone
+provides_tools:
+  - ai_researcher_preflight
+  - ai_researcher_run_plan
+  - ai_researcher_run_idea
+  - ai_researcher_write_paper
+  - ai_researcher_run_status

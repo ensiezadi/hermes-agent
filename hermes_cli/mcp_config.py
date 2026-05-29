@@ -37,6 +37,10 @@ _MCP_PRESETS: Dict[str, Dict[str, Any]] = {
         "command": "codex",
         "args": ["mcp-server"],
     },
+    "minimax": {
+        "command": "uvx",
+        "args": ["minimax-coding-plan-mcp", "-y"],
+    },
 }
 
 
