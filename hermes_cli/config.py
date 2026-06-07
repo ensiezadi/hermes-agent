@@ -5751,6 +5751,24 @@ def redact_key(key: str) -> str:
     return mask_secret(key, empty=color("(not set)", Colors.DIM))
 
 
+def _redact_config_for_display(value):
+    """Return a display-safe copy of config data with secret fields masked."""
+    if isinstance(value, dict):
+        redacted = {}
+        for key, item in value.items():
+            key_lower = str(key).lower()
+            if key_lower in {"api_key", "key", "token", "password", "secret"} or key_lower.endswith(
+                ("_api_key", "_key", "_token", "_password", "_secret")
+            ):
+                redacted[key] = redact_key(str(item or ""))
+            else:
+                redacted[key] = _redact_config_for_display(item)
+        return redacted
+    if isinstance(value, list):
+        return [_redact_config_for_display(item) for item in value]
+    return value
+
+
 def show_config():
     """Display current configuration."""
     config = load_config()
@@ -5793,7 +5811,7 @@ def show_config():
     # Model settings
     print()
     print(color("◆ Model", Colors.CYAN, Colors.BOLD))
-    print(f"  Model:        {config.get('model', 'not set')}")
+    print(f"  Model:        {_redact_config_for_display(config.get('model', 'not set'))}")
     _cfg_max_turns = config.get('agent', {}).get('max_turns', DEFAULT_CONFIG['agent']['max_turns'])
     print(f"  Max turns:    {_cfg_max_turns}")
     # Warn on stale HERMES_MAX_ITERATIONS ghost in .env that disagrees with

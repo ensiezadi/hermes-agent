@@ -260,6 +260,46 @@ class TestRunJobProfileContext:
         assert os.environ["HERMES_HOME"] == str(root)
         assert sched._get_hermes_home() == root
 
+    def test_build_job_prompt_loads_profile_skills_after_prior_import(
+        self, isolated_cron_profile_home, monkeypatch
+    ):
+        import cron.scheduler as sched
+        import tools.skills_tool as skills_tool
+
+        root, profile_home = isolated_cron_profile_home
+        skills_dir = profile_home / "skills"
+        skill_dir = skills_dir / "ops" / "profile-only"
+        skill_dir.mkdir(parents=True)
+        (skill_dir / "SKILL.md").write_text(
+            "---\n"
+            "name: profile-only\n"
+            "description: Profile scoped skill.\n"
+            "---\n\n"
+            "# Profile Only\n\n"
+            "Loaded from the named profile.\n",
+            encoding="utf-8",
+        )
+
+        # Importing skills_tool before entering the profile used to freeze its
+        # module-level SKILLS_DIR for the rest of the process.
+        assert skills_tool.SKILLS_DIR == skills_tool._INITIAL_SKILLS_DIR
+        assert skills_tool.SKILLS_DIR != profile_home / "skills"
+
+        job = {
+            "id": "abc",
+            "name": "profile-skill-job",
+            "profile": "support",
+            "skills": ["profile-only"],
+            "prompt": "go",
+        }
+
+        monkeypatch.setattr(sched, "_hermes_home", root)
+        with sched._job_profile_context(job["id"], job.get("profile")):
+            prompt = sched._build_job_prompt(job)
+
+        assert "could not be found" not in prompt
+        assert "Loaded from the named profile." in prompt
+
     def test_profile_dotenv_environment_is_restored(
         self, isolated_cron_profile_home, monkeypatch
     ):
