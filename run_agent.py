@@ -3387,9 +3387,19 @@ class AIAgent:
             # Explicitly read proxy settings while still honoring NO_PROXY for
             # loopback / local endpoints such as a locally hosted sub2api.
             _proxy = _get_proxy_for_base_url(base_url)
+            _event_hooks = None
+            if base_url_host_matches(base_url, "litellm.ensiezadi.lol"):
+                def _strip_openai_sdk_headers(request: _httpx.Request) -> None:
+                    for _name in list(request.headers.keys()):
+                        if _name.lower().startswith("x-stainless-"):
+                            del request.headers[_name]
+                    request.headers["User-Agent"] = "HermesAgent/0.16"
+
+                _event_hooks = {"request": [_strip_openai_sdk_headers]}
             return _httpx.Client(
                 transport=_httpx.HTTPTransport(socket_options=_sock_opts),
                 proxy=_proxy,
+                event_hooks=_event_hooks,
             )
         except Exception:
             return None

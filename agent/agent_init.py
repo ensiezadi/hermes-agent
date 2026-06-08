@@ -567,6 +567,10 @@ def init_agent(
     # Internal stream callback (set during streaming TTS).
     # Initialized here so _vprint can reference it before run_conversation.
     agent._stream_callback = None
+    agent._disable_streaming = base_url_host_matches(
+        getattr(agent, "_base_url_lower", "") or getattr(agent, "base_url", ""),
+        "litellm.ensiezadi.lol",
+    )
     # Deferred paragraph break flag — set after tool iterations so a
     # single "\n\n" is prepended to the next real text delta.
     agent._stream_needs_break = False
